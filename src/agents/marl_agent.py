@@ -6,11 +6,6 @@ import numpy as np
 import random
 
 class MARLAgent(nn.Module):
-    """
-    Base class for energy source agents in the multi-agent reinforcement learning system.
-    Each agent controls a specific energy source (solar, grid, or battery).
-    """
-    
     def __init__(self, config: Dict[str, Any]):
         super().__init__()
         
@@ -70,13 +65,11 @@ class MARLAgent(nn.Module):
         self.patience_counter = 0
     
     def _init_weights(self, module):
-        """Initialize network weights"""
         if isinstance(module, nn.Linear):
             nn.init.orthogonal_(module.weight, gain=np.sqrt(2))
             module.bias.data.zero_()
     
     def get_action(self, observations: torch.Tensor, communication_channel=None) -> torch.Tensor:
-        """Get action from policy network with immediate energy constraints"""
         if communication_channel is None:
             communication_channel = {}
             
@@ -128,7 +121,6 @@ class MARLAgent(nn.Module):
         return action
     
     def update_policy(self, observations: torch.Tensor, actions: torch.Tensor, rewards: torch.Tensor):
-        """Update policy using PPO with immediate energy constraints"""
         # Increment time step
         self.time_step += 1
         
@@ -248,18 +240,15 @@ class MARLAgent(nn.Module):
         self.buffer = []
     
     def update_daily_energy(self, energy_used: float, source: str):
-        """Update energy usage for a specific source"""
         self.energy_usage[source] = energy_used
         self.current_daily_energy = sum(self.energy_usage.values())
     
     def reset_daily_energy(self):
-        """Reset all energy tracking"""
         self.current_daily_energy = 0.0
         self.energy_usage = {'solar': 0.0, 'grid': 0.0, 'battery': 0.0}
         self.time_step = 0  # Reset time step
     
     def save(self, path: str):
-        """Save the agent's state"""
         torch.save({
             'model_state_dict': self.state_dict(),
             'config': self.config,
@@ -274,7 +263,6 @@ class MARLAgent(nn.Module):
         }, path)
     
     def load(self, path: str):
-        """Load the agent's state"""
         checkpoint = torch.load(path)
         self.load_state_dict(checkpoint['model_state_dict'])
         self.config = checkpoint['config']
@@ -288,7 +276,6 @@ class MARLAgent(nn.Module):
         self.patience_counter = checkpoint['patience_counter']
 
 class SolarAgent(MARLAgent):
-    """Agent controlling solar energy generation and usage."""
     def __init__(self, config):
         super().__init__(config)
         self.max_power = 5.0  # Maximum solar power in kW
@@ -296,7 +283,6 @@ class SolarAgent(MARLAgent):
         self.base_action_scale = 0.5  # Base scaling for solar actions
 
     def get_action(self, observations: torch.Tensor, communication_channel=None) -> torch.Tensor:
-        """Get action for solar agent based on current conditions"""
         if communication_channel is None:
             communication_channel = {}
             
@@ -330,14 +316,12 @@ class SolarAgent(MARLAgent):
         return scaled_action
 
     def _get_solar_potential(self, hour: int) -> float:
-        """Calculate solar generation potential for current hour"""
         if 5 <= hour < 19:  # Solar hours (5 AM to 7 PM)
             position = (hour - 5) / 14
             return self.max_power * np.exp(-((position - 0.5) ** 2) / 0.1)
         return 0.0
 
 class GridAgent(MARLAgent):
-    """Agent controlling grid energy usage."""
     def __init__(self, config):
         super().__init__(config)
         self.peak_price = 0.58672
@@ -346,7 +330,6 @@ class GridAgent(MARLAgent):
         self.base_action_scale = 0.3  # Base scaling for grid actions
 
     def get_action(self, observations: torch.Tensor, communication_channel=None) -> torch.Tensor:
-        """Get action for grid agent based on current conditions"""
         if communication_channel is None:
             communication_channel = {}
             
@@ -375,7 +358,6 @@ class GridAgent(MARLAgent):
         return scaled_action
 
 class BatteryAgent(MARLAgent):
-    """Agent controlling battery storage and usage."""
     def __init__(self, config):
         super().__init__(config)
         self.battery_capacity = 12.5  # 12.5 kWh capacity
@@ -387,7 +369,6 @@ class BatteryAgent(MARLAgent):
         self.base_action_scale = 0.4  # Base scaling for battery actions
 
     def get_action(self, observations: torch.Tensor, communication_channel=None) -> torch.Tensor:
-        """Get action for battery agent based on current conditions"""
         if communication_channel is None:
             communication_channel = {}
             
@@ -438,7 +419,6 @@ class BatteryAgent(MARLAgent):
         return scaled_action
 
     def _calculate_action_utilities(self, state):
-        """Calculate utilities for different energy sources based on current state"""
         current_time = state['time_step'][0]
         current_part = ['morning', 'afternoon', 'evening'][int(current_time) % 3]
         grid_price = state['grid_pricing'][0]

@@ -16,7 +16,6 @@ def load_config(config_path: str) -> Dict[str, Any]:
     return config
 
 def setup_logging(config: Dict[str, Any]) -> None:
-    """Setup logging configuration"""
     if config['logging']['wandb']:
         wandb.init(
             project=config['logging']['wandb_project'],
@@ -25,7 +24,6 @@ def setup_logging(config: Dict[str, Any]) -> None:
         )
 
 def save_checkpoint(agents, env, episode, save_dir='checkpoints'):
-    """Save the complete state of all agents and environment"""
     import os
     from datetime import datetime
     
@@ -58,7 +56,6 @@ def save_checkpoint(agents, env, episode, save_dir='checkpoints'):
     return checkpoint_dir
 
 def load_checkpoint(checkpoint_dir, config):
-    """Load a complete checkpoint including all agents and environment state"""
     import os
     
     if not os.path.exists(checkpoint_dir):
@@ -289,39 +286,8 @@ def train(config: Dict[str, Any], load_checkpoint_dir: str = None) -> None:
                     sum(afternoon_costs.values()) + 
                     sum(evening_costs.values())
                 )
-                
-                print("\nDetailed Power Usage and Cost Breakdown for Day Cycle", episode + 1)
-                
-                print("\nMorning Session (6-9 AM):")
-                print(f"Solar Power: {morning_energy['solar']:.2f} kWh")
-                print(f"Grid Power: {morning_energy['grid']:.2f} kWh")
-                print(f"Battery Power: {morning_energy['battery']:.2f} kWh")
-                print(f"Solar Agent Cost: ${morning_costs['solar']:.2f}")
-                print(f"Grid Agent Cost: ${morning_costs['grid']:.2f}")
-                print(f"Battery Agent Cost: ${morning_costs['battery']:.2f}")
-                print(f"Total Morning Cost: ${sum(morning_costs.values()):.2f}")
-                
-                print("\nAfternoon Session (9 AM - 4 PM):")
-                print(f"Solar Power: {afternoon_energy['solar']:.2f} kWh")
-                print(f"Grid Power: {afternoon_energy['grid']:.2f} kWh")
-                print(f"Battery Power: {afternoon_energy['battery']:.2f} kWh")
-                print(f"Solar Agent Cost: ${afternoon_costs['solar']:.2f}")
-                print(f"Grid Agent Cost: ${afternoon_costs['grid']:.2f}")
-                print(f"Battery Agent Cost: ${afternoon_costs['battery']:.2f}")
-                print(f"Total Afternoon Cost: ${sum(afternoon_costs.values()):.2f}")
-                
-                print("\nEvening Session (4-9 PM):")
-                print(f"Solar Power: {evening_energy['solar']:.2f} kWh")
-                print(f"Grid Power: {evening_energy['grid']:.2f} kWh")
-                print(f"Battery Power: {evening_energy['battery']:.2f} kWh")
-                print(f"Solar Agent Cost: ${evening_costs['solar']:.2f}")
-                print(f"Grid Agent Cost: ${evening_costs['grid']:.2f}")
-                print(f"Battery Agent Cost: ${evening_costs['battery']:.2f}")
-                print(f"Total Evening Cost: ${sum(evening_costs.values()):.2f}")
-                
-                print(f"\nTotal Cost for Day: ${total_daily_cost:.2f}")
-                print(f"Battery Charge Level: {env.battery_charge:.2f} kWh")
-                print("-" * 50)
+                            
+               
                 
                 # Print total energy usage for the day
                 total_solar = morning_energy['solar'] + afternoon_energy['solar'] + evening_energy['solar']
@@ -329,33 +295,13 @@ def train(config: Dict[str, Any], load_checkpoint_dir: str = None) -> None:
                 total_battery = morning_energy['battery'] + afternoon_energy['battery'] + evening_energy['battery']
                 total_energy = total_solar + total_grid + total_battery
                 
-                print("\nTotal Energy Usage for Day:")
-                print(f"Solar: {total_solar:.2f} kWh ({total_solar/total_energy*100:.1f}%)")
-                print(f"Grid: {total_grid:.2f} kWh ({total_grid/total_energy*100:.1f}%)")
-                print(f"Battery: {total_battery:.2f} kWh ({total_battery/total_energy*100:.1f}%)")
-                print(f"Total: {total_energy:.2f} kWh")
+                print(f"\nDay {episode + 1}")
+                print(f"Energy: {total_energy:.1f} kWh (Solar: {total_solar/total_energy*100:.0f}%, Grid: {total_grid/total_energy*100:.0f}%, Battery: {total_battery/total_energy*100:.0f}%)")
+                print(f"Cost: ${total_daily_cost:.2f} | Battery: {env.battery_charge:.1f} kWh")
                 print("-" * 50)
 
-                # Print reward magnitude and components
-                print("\nReward Analysis:")
-                print(f"Reward Magnitude: {abs(reward):.2f}")
-                for component, value in info['reward_components'].items():
-                    print(f"  {component}: {value:.2f}")
-                print("-" * 50)
                 break
-
-        # Print episode summary
-        print(f"\nDay cycle {episode + 1}/{config['training']['num_episodes']}")
-        print("Reward Components:")
-        for component, value in info['reward_components'].items():
-            print(f"  {component}: {value:.2f}")
-        print(f"Total Reward: {episode_reward:.2f}")
-        print(f"Total Cost: ${total_daily_cost:.2f}")
-        print("Energy Usage:")
-        print(f"  Solar: {morning_energy['solar'] + afternoon_energy['solar'] + evening_energy['solar']:.2f} kWh")
-        print(f"  Grid: {morning_energy['grid'] + afternoon_energy['grid'] + evening_energy['grid']:.2f} kWh")
-        print(f"  Battery: {morning_energy['battery'] + afternoon_energy['battery'] + evening_energy['battery']:.2f} kWh")
-        print(f"Battery Charge: {env.battery_charge:.2f} kWh")
+       
 
         # Save model checkpoint periodically
         if (episode + 1) % config['training'].get('save_interval', 100) == 0:
@@ -363,7 +309,6 @@ def train(config: Dict[str, Any], load_checkpoint_dir: str = None) -> None:
 
 
 def evaluate(env: EnergyResilienceEnv, agents: list, config: Dict[str, Any]) -> None:
-    """Evaluate the current policy (debug-friendly)"""
     eval_rewards = []
     eval_lengths = []
 

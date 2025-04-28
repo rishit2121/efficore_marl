@@ -114,7 +114,6 @@ class EnergyResilienceEnv(gym.Env):
         }
     
     def _initialize_network(self):
-        """Initialize the power network with solar, grid, and battery components"""
         # Add buses
         self.network.add("Bus", "main_bus", v_nom=20, x=0, y=0)
         self.network.add("Bus", "load_bus", v_nom=20, x=1, y=0)
@@ -133,7 +132,6 @@ class EnergyResilienceEnv(gym.Env):
         self.network.add("Line", "line4", bus0="battery_bus", bus1="main_bus", x=0.1)
     
     def _initialize_pricing_and_demand(self):
-        """Initialize pricing and demand profiles for the day"""
         # Updated grid pricing for different periods ($/kWh)
         self.pricing = {
             'morning': 0.28,    # Updated morning rate
@@ -163,7 +161,6 @@ class EnergyResilienceEnv(gym.Env):
         }
     
     def _get_current_pricing_and_demand(self, time_step: int):
-        """Get current pricing and demand based on the 15-minute interval"""
         # Convert time_step to hour (0-23)
         current_hour = (time_step // 4) % 24
         
@@ -196,7 +193,6 @@ class EnergyResilienceEnv(gym.Env):
         return current_price, current_demand
 
     def _get_solar_potential(self, time_step: int) -> float:
-        """Get solar generation potential for current 15-minute interval using real data"""
         # Get current date and time
         current_date = self.solar_data['DATE_TIME'].iloc[0].date()
         current_time = datetime.strptime(f"{time_step//4:02d}:{(time_step%4)*15:02d}", "%H:%M").time()
@@ -217,7 +213,6 @@ class EnergyResilienceEnv(gym.Env):
             return 0.0
 
     def _get_observation_space(self) -> gym.spaces.Dict:
-        """Define the observation space for the environment"""
         return gym.spaces.Dict({
             'power_flow': gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_agents,)),
             'battery_level': gym.spaces.Box(low=0, high=100, shape=(self.n_agents,)),
@@ -226,14 +221,12 @@ class EnergyResilienceEnv(gym.Env):
         })
     
     def _get_action_space(self) -> gym.spaces.Dict:
-        """Define the action space for the environment"""
         return gym.spaces.Dict({
             'power_control': gym.spaces.Box(low=-1, high=1, shape=(self.n_agents,)),
             'battery_control': gym.spaces.Box(low=-1, high=1, shape=(self.n_agents,))
         })
     
     def reset(self, seed=None, options=None) -> Tuple[Dict[str, np.ndarray], Dict]:
-        """Reset the environment to initial state"""
         super().reset(seed=seed)
         
         self.time_step = 0
@@ -280,7 +273,6 @@ class EnergyResilienceEnv(gym.Env):
         return self._get_observation(), {}
     
     def _apply_actions(self, actions: Dict[str, np.ndarray]):
-        """Apply actions to the environment"""
         # Get current interval info
         current_price, current_demand = self._get_current_pricing_and_demand(self.time_step)
         solar_potential = self._get_solar_potential(self.time_step)
@@ -405,7 +397,6 @@ class EnergyResilienceEnv(gym.Env):
         return solar_used, grid_used, battery_used, step_costs
 
     def step(self, actions: list) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict]:
-        """Execute one time step in the environment"""
         # Convert agent actions list to dict
         actions_dict = {
             'solar_control': actions[0],  # Solar/Resilience agent
@@ -490,7 +481,6 @@ class EnergyResilienceEnv(gym.Env):
         return self._get_observation(), reward, done, truncated, info
 
     def _calculate_reward(self) -> Tuple[float, Dict[str, float]]:
-        """Calculate reward considering multiple objectives"""
         current_price, current_demand = self._get_current_pricing_and_demand(self.time_step)
         solar_potential = self._get_solar_potential(self.time_step)
         
@@ -611,7 +601,6 @@ class EnergyResilienceEnv(gym.Env):
         return reward, reward_components
 
     def _update_metrics(self) -> Dict[str, float]:
-        """Update metrics for cost, resilience, and reliability"""
         total_cost = sum(self.network.generators['p_set'] * self.network.generators['marginal_cost'])
         unmet_demand = max(0, self.network.loads.at['household', 'p_set'] - 
                            sum(self.network.generators['p_set']))
@@ -628,7 +617,6 @@ class EnergyResilienceEnv(gym.Env):
         }
     
     def _get_observation(self) -> Dict[str, np.ndarray]:
-        """Get current observation of the environment"""
         # Ensure all values are valid numbers
         solar_storage = max(0, min(self.solar_energy_storage, 100))  # Cap at 100
         grid_price = max(0, min(self._get_current_pricing_and_demand(self.time_step)[0], 100))  # Cap at 100
@@ -642,50 +630,4 @@ class EnergyResilienceEnv(gym.Env):
             'time_step': np.array([time_step])
         }
     
-    # def render(self, mode='human'):
-    #     """Render the current state of the environment"""
-    #     if mode == 'human':
-    #         # Calculate power flow before visualization
-    #         self.network.lpf()
-            
-    #         # Plot current network state
-    #         self.visualizer.plot_network(
-    #             title=f"Power Network - Step {self.time_step}",
-    #             save_path=os.path.join(self.viz_dir, f"network_step_{self.time_step}.png")
-    #         )
-            
-    #         # Plot power flow
-    #         self.visualizer.plot_power_flow(
-    #             save_path=os.path.join(self.viz_dir, f"power_flow_step_{self.time_step}.png")
-    #         )
-            
-    #         # Plot bus voltages
-    #         self.visualizer.plot_bus_voltages(
-    #             save_path=os.path.join(self.viz_dir, f"voltages_step_{self.time_step}.png")
-    #         )
-    
-    # def create_animation(self, steps: int = None):
-    #     """Create an animation of the network over time"""
-    #     if steps is None:
-    #         steps = self.max_steps
-        
-    #     self.visualizer.create_animation(
-    #         steps=steps,
-    #         save_path=os.path.join(self.viz_dir, "network_animation.gif")
-    #     )
-    
-    # def plot_metrics(self):
-    #     """Plot environment metrics over time"""
-    #     plt.figure(figsize=(12, 8))
-        
-    #     for metric_name, values in self.metrics.items():
-    #         plt.plot(values, label=metric_name)
-        
-    #     plt.xlabel('Time Step')
-    #     plt.ylabel('Value')
-    #     plt.title('Environment Metrics Over Time')
-    #     plt.legend()
-    #     plt.grid(True)
-        
-    #     plt.savefig(os.path.join(self.viz_dir, "metrics.png"))
-    #     plt.close()
+   
