@@ -1,0 +1,61 @@
+# Environment Configuration
+environment:
+  n_agents: 3
+  max_steps: 1000
+  observation_dim: 10
+  action_dim: 4
+  
+# Network Configuration
+network:
+  hidden_dim: 64
+  learning_rate: 0.001
+  gamma: 0.99
+  lambda: 0.95
+  clip_range: 0.2
+  value_coef: 0.5
+  entropy_coef: 0.01
+  
+# Training Configuration
+training:
+  num_episodes: 1000
+  batch_size: 64
+  num_epochs: 10
+  save_interval: 100  # Save checkpoint every 100 episodes
+  checkpoint_dir: "checkpoints"  # Directory to save model checkpoints
+  load_checkpoint: false  # Whether to load from a checkpoint
+  checkpoint_path: ""  # Path to load checkpoint from (if load_checkpoint is true)
+  eval_interval: 50
+  num_eval_episodes: 10
+  
+# Agent Configuration
+agent:
+  type: "marl"
+  policy: "ppo"
+  normalize_observations: true
+  normalize_returns: true
+  
+# Logging Configuration
+logging:
+  log_dir: "logs"
+  tensorboard: true
+  wandb: false
+  wandb_project: "energy_resilience"
+  wandb_entity: "your_entity"
+  
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - energy_cost
+    - resilience_score
+    - reliability_score
+  visualization:
+    plot_interval: 10
+    save_plots: true
+    plot_dir: "plots"
+    
+# Checkpoint Configuration
+checkpoint:
+  enabled: true  # Enable checkpointing
+  save_interval: 100  # Save every 100 episodes
+  max_to_keep: 5  # Keep only the 5 most recent checkpoints
+  save_best: true  # Save best performing model separately
