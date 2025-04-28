@@ -97,10 +97,17 @@ python src/train.py --load_checkpoint path/to/checkpoint
 The environment simulates:
 - 15-minute time steps
 - Dynamic demand patterns
-- Solar generation based on time of day
+- Solar generation based on time of day, modeled using a bell curve derived from real solar production data
 - Battery storage with capacity limits
-- Grid connection with time-varying pricing
+- Grid connection with time-varying pricing based on PG&E utility rates
 - Power flow calculations using PyPSA
+
+### Data Sources
+- **Solar Production**: Modeled using a bell curve derived from real solar production data, capturing the typical daily generation pattern with peak production around midday
+- **Utility Costs**: Based on PG&E's time-of-use (TOU) rates, including:
+  - Peak hours (4 PM - 9 PM): Higher rates
+  - Off-peak hours: Lower rates
+  - Seasonal variations in pricing
 
 ## Contributing
 
