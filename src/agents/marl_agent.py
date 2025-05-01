@@ -449,3 +449,4 @@ class BatteryAgent(MARLAgent):
             battery_utility = 0.8 if battery_charge < 0.9 else 0.2  # Balance charging/discharging
 
         return solar_utility, grid_utility, battery_utility
+ 
